@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "react-data-table-component";
-import pluginId from "../../";
 
 import axios from "axios";
 import {
@@ -36,7 +35,7 @@ const HomePage = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${baseUrl}/${pluginId}/get/dropdown/values`
+          `${baseUrl}/Excel Export/get/dropdown/values`
         );
         setDropDownData(response.data);
         setIsLoading(false);
@@ -60,7 +59,7 @@ const HomePage = () => {
   const handleDownloadExcel = async () => {
     try {
       const response = await axios.get(
-        `${baseUrl}/${pluginId}/download/excel`,
+        `${baseUrl}/Excel Export/download/excel`,
         {
           responseType: "arraybuffer",
           params: {
@@ -127,7 +126,7 @@ const HomePage = () => {
         const limit = newPerPage;
 
         const response = await axios.get(
-          `${baseUrl}/${pluginId}/get/table/data?uid=${value}&limit=${limit}&offset=${offset}`
+          `${baseUrl}/Excel Export/get/table/data?uid=${value}&limit=${limit}&offset=${offset}`
         );
         if (response?.data?.columns) {
           setColumns(response.data.columns);
@@ -155,7 +154,7 @@ const HomePage = () => {
       const limit = newPerPage;
 
       const response = await axios.get(
-        `${baseUrl}/${pluginId}/get/table/data?uid=${selectedValue}&limit=${limit}&offset=${offset}`
+        `${baseUrl}/Excel Export/get/table/data?uid=${selectedValue}&limit=${limit}&offset=${offset}`
       );
 
       if (response?.data?.data) {

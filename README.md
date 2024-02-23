@@ -1,3 +1,3 @@
-# Strapi plugin excel-download
+# Strapi plugin Excel Export
 
 A quick description of excel-download.

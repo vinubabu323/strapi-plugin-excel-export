@@ -1,26 +1,37 @@
 {
   "name": "strapi-plugin-excel-export-2024",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "This is the description of the plugin.",
   "strapi": {
-    "name": "excelexport",
-    "description": "A strapi plugin to export data from strapi to excel.",
+    "name": "Excel Export",
+    "description": "Description of Excel Download plugin",
     "kind": "plugin",
     "displayName": "Excel Export"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@strapi/design-system": "^1.6.3",
+    "@strapi/helper-plugin": "^4.6.0",
+    "@strapi/icons": "^1.6.3",
+    "prop-types": "^15.7.2",
+    "react-data-table-component": "^7.6.2",
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^5.3.4",
+    "styled-components": "^5.3.6"
+  },
   "peerDependencies": {
-    "@strapi/strapi": "^4.0.0"
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^5.3.4",
+    "styled-components": "^5.3.6"
   },
   "author": {
     "name": "Vinu Babu",
     "email": "vinubabu323@gmail.com"
   },
-  "maintainers": [
-    {
-      "name": "A Strapi developer"
-    }
-  ],
   "engines": {
     "node": ">=14.19.1 <=18.x.x",
     "npm": ">=6.0.0"
@@ -35,11 +46,13 @@
   },
   "keywords": [
     "strapi",
+    "strapi-excel-download",
     "excel",
-    "plugin",
-    "excel-export",
-    "strapi",
-    "excel",
-    "download"
-  ]
+    "excel-download",
+    "excel-export"
+  ],
+  "bugs": {
+    "url": "https://github.com/vinubabu323/strapi-plugin-excel-export/issues"
+  },
+  "homepage": "https://github.com/vinubabu323/strapi-plugin-excel-export#readme"
 }
