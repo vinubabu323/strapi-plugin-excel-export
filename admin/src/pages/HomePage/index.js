@@ -35,7 +35,7 @@ const HomePage = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
-          `${baseUrl}/Excel Export/get/dropdown/values`
+          `${baseUrl}/excel-export/get/dropdown/values`
         );
         setDropDownData(response.data);
         setIsLoading(false);
@@ -59,7 +59,7 @@ const HomePage = () => {
   const handleDownloadExcel = async () => {
     try {
       const response = await axios.get(
-        `${baseUrl}/Excel Export/download/excel`,
+        `${baseUrl}/excel-export/download/excel`,
         {
           responseType: "arraybuffer",
           params: {
@@ -126,7 +126,7 @@ const HomePage = () => {
         const limit = newPerPage;
 
         const response = await axios.get(
-          `${baseUrl}/Excel Export/get/table/data?uid=${value}&limit=${limit}&offset=${offset}`
+          `${baseUrl}/excel-export/get/table/data?uid=${value}&limit=${limit}&offset=${offset}`
         );
         if (response?.data?.columns) {
           setColumns(response.data.columns);
@@ -154,7 +154,7 @@ const HomePage = () => {
       const limit = newPerPage;
 
       const response = await axios.get(
-        `${baseUrl}/Excel Export/get/table/data?uid=${selectedValue}&limit=${limit}&offset=${offset}`
+        `${baseUrl}/excel-export/get/table/data?uid=${selectedValue}&limit=${limit}&offset=${offset}`
       );
 
       if (response?.data?.data) {
