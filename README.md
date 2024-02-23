@@ -6,7 +6,7 @@ This plugin allows users to generate and download excel files directly from thei
 
 This plugin allows users to extract data from strapi backend into **.xlsx** format
 
-![multi-select screenshot](./screenshots/screenshot.png)
+![Multi-Select Video](./screenshots/working.gif)
 
 ## How to install
 
