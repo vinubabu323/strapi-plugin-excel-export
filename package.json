@@ -1,6 +1,6 @@
 {
   "name": "strapi-plugin-excel-export-2024",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "This is the description of the plugin.",
   "strapi": {
     "name": "excel-export",
