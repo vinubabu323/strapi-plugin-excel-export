@@ -1,10 +1,10 @@
 {
   "name": "strapi-plugin-excel-export-2024",
-  "version": "1.0.3",
-  "description": "This is the description of the plugin.",
+  "version": "1.0.4",
+  "description": "A strapi plugin used which can be used to download data in xlsx format",
   "strapi": {
     "name": "excel-export",
-    "description": "Description of Excel Download plugin",
+    "description": "A strapi plugin used which can be used to download data in xlsx format",
     "kind": "plugin",
     "displayName": "Excel Export"
   },
@@ -26,7 +26,8 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-router-dom": "^5.3.4",
-    "styled-components": "^5.3.6"
+    "styled-components": "^5.3.6",
+    "@strapi/strapi": "^4.0.0"
   },
   "author": {
     "name": "Vinu Babu",
