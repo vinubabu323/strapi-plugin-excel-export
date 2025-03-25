@@ -38,7 +38,7 @@ module.exports = ({ strapi }) => ({
       offset
     );
 
-    let response = await strapi.db.query(uid).findMany(query);
+    let response = await strapi.entityService.findMany(uid, query);
 
     let header = [
       ...excel?.config[uid]?.columns,
@@ -53,7 +53,7 @@ module.exports = ({ strapi }) => ({
       };
     }
 
-    let count = await strapi.db.query(uid).count(where);
+    let count = await strapi.entityService.count(uid, { where });
 
     let tableData = await this.restructureData(response, excel?.config[uid]);
 
@@ -73,7 +73,7 @@ module.exports = ({ strapi }) => ({
 
       let query = await this.restructureObject(excel?.config[uid], uid);
 
-      let response = await strapi.db.query(uid).findMany(query);
+      let response = await strapi.entityService.findMany(uid, query);
 
       let excelData = await this.restructureData(response, excel?.config[uid]);
 

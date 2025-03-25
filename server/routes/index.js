@@ -5,7 +5,7 @@ module.exports = [
     handler: "myController.getDropDownData",
     config: {
       policies: [],
-      auth: false,
+      auth: { scope: ["admin::isAuthenticated"] },
     },
   },
   {
@@ -14,7 +14,7 @@ module.exports = [
     handler: "myController.getTableData",
     config: {
       policies: [],
-      auth: false,
+      auth: { scope: ["admin::isAuthenticated"] },
     },
   },
   {
@@ -23,7 +23,7 @@ module.exports = [
     handler: "myController.downloadExcel",
     config: {
       policies: [],
-      auth: false,
+      auth: { scope: ["admin::isAuthenticated"] },
     },
   },
 ];
