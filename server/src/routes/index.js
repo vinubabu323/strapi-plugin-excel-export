@@ -2,7 +2,7 @@ module.exports = [
   {
     method: "GET",
     path: "/get/dropdown/values",
-    handler: "myController.getDropDownData",
+    handler: "excel-export.getDropDownData",
     config: {
       policies: [],
       auth: false,
@@ -11,7 +11,7 @@ module.exports = [
   {
     method: "GET",
     path: "/get/table/data",
-    handler: "myController.getTableData",
+    handler: "excel-export.getTableData",
     config: {
       policies: [],
       auth: false,
@@ -20,7 +20,7 @@ module.exports = [
   {
     method: "GET",
     path: "/download/excel",
-    handler: "myController.downloadExcel",
+    handler: "excel-export.downloadExcel",
     config: {
       policies: [],
       auth: false,

@@ -1,5 +1,2 @@
-import pluginPkg from '../../package.json';
+export const PLUGIN_ID = 'strapi-plugin-excel-export-2024';
 
-const pluginId = pluginPkg.name.replace(/^(@[^-,.][\w,-]+\/|strapi-)plugin-/i, '');
-
-export default pluginId;
