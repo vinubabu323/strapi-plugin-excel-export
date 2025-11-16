@@ -3,9 +3,112 @@
 import ExcelJS from 'exceljs';
 
 /**
+ * Safely read nested property using dot notation, e.g. "location.detailed_place".
+ *
+ * @param {unknown} source
+ * @param {string} path
+ * @returns {unknown}
+ */
+const getDeepValue = (source, path) => {
+  if (!source || typeof source !== 'object' || !path) return undefined;
+
+  const segments = path.split('.');
+  let current = /** @type {any} */ (source);
+
+  for (const segment of segments) {
+    if (current == null || typeof current !== 'object') return undefined;
+    current = current[segment];
+  }
+
+  return current;
+};
+
+/**
+ * @typedef {Object} RelationFieldDescriptor
+ * @property {string} flatKey     // e.g. "shipping_infos.location.detailed_place"
+ * @property {string} relationKey // e.g. "shipping_infos"
+ * @property {string} innerPath   // e.g. "location.detailed_place" or "first_name"
+ */
+
+/**
+ * Normalize "column"/"columns" to an array of strings.
+ *
+ * @param {any} node
+ * @returns {string[]}
+ */
+const extractColumnsArray = (node) => {
+  if (!node || typeof node !== 'object') return [];
+  const col = node.column ?? node.columns;
+  if (!col) return [];
+  if (Array.isArray(col)) return col;
+  if (typeof col === 'string') return [col];
+  return [];
+};
+
+/**
+ * Recursively flatten a relation config node into field descriptors.
+ *
+ * Example for relationKey = "shipping_infos":
+ *
+ * {
+ *   location: { column: ["detailed_place"] }
+ * }
+ *
+ * => flatKey:  "shipping_infos.location.detailed_place"
+ *    innerPath: "location.detailed_place"
+ *
+ * @param {string} relationKey
+ * @param {any} node
+ * @param {string} [innerPrefix]
+ * @param {RelationFieldDescriptor[]} [acc]
+ * @returns {RelationFieldDescriptor[]}
+ */
+const flattenRelationNode = (relationKey, node, innerPrefix = '', acc = []) => {
+  if (!node || typeof node !== 'object') return acc;
+
+  const cols = extractColumnsArray(node);
+
+  if (cols.length > 0) {
+    const base = innerPrefix ? `${innerPrefix}.` : '';
+    cols.forEach((field) => {
+      const innerPath = base + field; // e.g. "location.detailed_place" or "first_name"
+      const flatKey = `${relationKey}.${innerPath}`;
+      acc.push({ flatKey, relationKey, innerPath });
+    });
+  }
+
+  Object.entries(node).forEach(([key, value]) => {
+    if (key === 'column' || key === 'columns') return;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+
+    const nextPrefix = innerPrefix ? `${innerPrefix}.${key}` : key;
+    flattenRelationNode(relationKey, value, nextPrefix, acc);
+  });
+
+  return acc;
+};
+
+/**
+ * Build all relation field descriptors for a collection config.
+ *
+ * @param {Record<string, any>} relations
+ * @returns {RelationFieldDescriptor[]}
+ */
+const buildRelationDescriptors = (relations) => {
+  /** @type {RelationFieldDescriptor[]} */
+  const all = [];
+
+  Object.entries(relations || {}).forEach(([relationKey, node]) => {
+    flattenRelationNode(relationKey, node, '', all);
+  });
+
+  return all;
+};
+
+/**
  * @typedef {Object} ExcelCollectionConfig
  * @property {string[]} columns
- * @property {Record<string, { column: string[] }>} relation
+ * @property {Record<string, any>} relation
  * @property {boolean | string} [locale] - If truthy, apply locale filter (default "en").
  */
 
@@ -15,8 +118,10 @@ import ExcelJS from 'exceljs';
 
 /**
  * Resolve the Excel plugin configuration in a v5-friendly way.
- * - Preferred: config from `plugin::excel-export`
- * - Fallback: legacy `excel` root config (for backward compatibility)
+ *
+ * Priority:
+ *  1. plugin::excel-export (new style)
+ *  2. legacy `excel.config` (old style)
  *
  * Expected shape:
  * {
@@ -36,14 +141,12 @@ import ExcelJS from 'exceljs';
 const resolveExcelConfig = (strapi) => {
   /** @type {{ config?: ExcelConfigMap } | undefined} */
   const pluginConfig = strapi.config.get('plugin::strapi-plugin-excel-export-2024');
-
   if (pluginConfig) {
     return pluginConfig;
   }
 
   /** @type {{ config?: ExcelConfigMap } | undefined} */
   const legacyConfig = strapi.config.get('excel');
-  console.log(legacyConfig)
   if (legacyConfig && legacyConfig.config) {
     return legacyConfig.config;
   }
@@ -98,18 +201,11 @@ const excelExportController = ({ strapi }) => ({
   async getDropDownData() {
     const excelConfig = resolveExcelConfig(strapi);
 
-    console.log('@@@ excelConfig')
-    console.log(excelConfig)
-    console.log('@@@ excelConfig')
-
     /** @type {{ label: string; value: string }[]} */
     const dropDownValues = [];
 
     Object.entries(excelConfig).forEach(([uid]) => {
       const contentType = strapi.contentType(uid);
-      console.log('@@@ contentType')
-      console.log(contentType)
-      console.log('@@@ contentType')
 
       if (!contentType) {
         strapi.log.warn(
@@ -183,9 +279,11 @@ const excelExportController = ({ strapi }) => ({
       strapi.db.query(uid).count({ where: query.where }),
     ]);
 
+    const relationDescriptors = buildRelationDescriptors(collectionConfig.relation || {});
+
     const header = [
       ...(collectionConfig.columns || []),
-      ...Object.keys(collectionConfig.relation || {}),
+      ...relationDescriptors.map((d) => d.flatKey),
     ];
 
     const tableData = await this.restructureData(entities, collectionConfig);
@@ -232,13 +330,16 @@ const excelExportController = ({ strapi }) => ({
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Sheet 1');
 
+      const relationDescriptors = buildRelationDescriptors(collectionConfig.relation || {});
+
       const headers = [
         ...(collectionConfig.columns || []),
-        ...Object.keys(collectionConfig.relation || {}),
+        ...relationDescriptors.map((d) => d.flatKey),
       ];
 
       const headerRestructure = headers.map((header) =>
         header
+          .replace(/\./g, '_')
           .split('_')
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ')
@@ -298,14 +399,13 @@ const excelExportController = ({ strapi }) => ({
     /** @type {{ [key: string]: unknown }} */
     const populate = {};
 
-    Object.entries(collectionConfig.relation || {}).forEach(([key, relationConfig]) => {
-      populate[key] = {
-        select: relationConfig.column || [],
-      };
+    // Populate each top-level relation; nested stuff is handled at flatten-time
+    Object.keys(collectionConfig.relation || {}).forEach((relationKey) => {
+      populate[relationKey] = true;
     });
 
     /** @type {{ [key: string]: 'asc' | 'desc' }} */
-    const orderBy = { id: 'asc' };
+    const orderBy = { id: 'desc' };
 
     /** @type {{
      *   select: string[] | '*';
@@ -317,9 +417,10 @@ const excelExportController = ({ strapi }) => ({
      * }}
      */
     const query = {
-      select: collectionConfig.columns && collectionConfig.columns.length > 0
-        ? collectionConfig.columns
-        : '*',
+      select:
+        collectionConfig.columns && collectionConfig.columns.length > 0
+          ? collectionConfig.columns
+          : '*',
       populate,
       where,
       orderBy,
@@ -349,40 +450,39 @@ const excelExportController = ({ strapi }) => ({
     const columns = collectionConfig.columns || [];
     const relations = collectionConfig.relation || {};
 
+    const relationDescriptors = buildRelationDescriptors(relations);
+
     return data.map((item) => {
       /** @type {Record<string, unknown>} */
       const restructuredItem = {};
 
-      // Main scalar fields
+      // 1. Scalar fields
       columns.forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(item, key)) {
           restructuredItem[key] = item[key];
         }
       });
 
-      // Relation fields
-      Object.entries(relations).forEach(([relationKey, relationConfig]) => {
+      // 2. Relation fields (flattened)
+      relationDescriptors.forEach(({ flatKey, relationKey, innerPath }) => {
         if (!Object.prototype.hasOwnProperty.call(item, relationKey)) {
+          restructuredItem[flatKey] = null;
           return;
         }
 
         const relationValue = item[relationKey];
-        const [column] = relationConfig.column || [];
 
-        if (!column) {
-          restructuredItem[relationKey] = null;
-          return;
-        }
+        if (Array.isArray(relationValue)) {
+          const values = relationValue
+            .map((entry) => getDeepValue(entry, innerPath))
+            .filter((v) => v != null && v !== '');
 
-        if (Array.isArray(relationValue) && relationValue.length > 0) {
-          restructuredItem[relationKey] = relationValue
-            .map((child) => child?.[column])
-            .filter((value) => value != null)
-            .join(' ');
+          restructuredItem[flatKey] = values.length ? values.join(' ') : null;
         } else if (relationValue && typeof relationValue === 'object') {
-          restructuredItem[relationKey] = relationValue[column] ?? null;
+          const value = getDeepValue(relationValue, innerPath);
+          restructuredItem[flatKey] = value ?? null;
         } else {
-          restructuredItem[relationKey] = null;
+          restructuredItem[flatKey] = null;
         }
       });
 
