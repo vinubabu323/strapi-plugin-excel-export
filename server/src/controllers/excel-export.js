@@ -38,7 +38,7 @@ const getDeepValue = (source, path) => {
  */
 const extractColumnsArray = (node) => {
   if (!node || typeof node !== 'object') return [];
-  const col = node.column ?? node.columns;
+  const col = node.columns ?? node.column;
   if (!col) return [];
   if (Array.isArray(col)) return col;
   if (typeof col === 'string') return [col];
@@ -51,7 +51,9 @@ const extractColumnsArray = (node) => {
  * Example for relationKey = "shipping_infos":
  *
  * {
- *   location: { column: ["detailed_place"] }
+ *   relation: {
+ *     location: { column: ["detailed_place"] }
+ *   }
  * }
  *
  * => flatKey:  "shipping_infos.location.detailed_place"
@@ -80,6 +82,12 @@ const flattenRelationNode = (relationKey, node, innerPrefix = '', acc = []) => {
   Object.entries(node).forEach(([key, value]) => {
     if (key === 'column' || key === 'columns') return;
     if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+
+    // Special case: `relation` is just a container for nested relations, not a path segment
+    if (key === 'relation') {
+      flattenRelationNode(relationKey, value, innerPrefix, acc);
+      return;
+    }
 
     const nextPrefix = innerPrefix ? `${innerPrefix}.${key}` : key;
     flattenRelationNode(relationKey, value, nextPrefix, acc);
@@ -399,7 +407,7 @@ const excelExportController = ({ strapi }) => ({
     /** @type {{ [key: string]: unknown }} */
     const populate = {};
 
-    // Populate each top-level relation; nested stuff is handled at flatten-time
+    // Populate each top-level relation; nested stuff is handled when flattening
     Object.keys(collectionConfig.relation || {}).forEach((relationKey) => {
       populate[relationKey] = true;
     });
